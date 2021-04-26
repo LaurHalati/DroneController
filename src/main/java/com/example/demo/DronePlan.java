@@ -4,7 +4,12 @@ package com.example.demo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.GeoShapeField;
+import org.springframework.data.elasticsearch.core.geo.GeoJsonPolygon;
+import org.springframework.data.elasticsearch.core.geo.GeoPoint;
+import org.springframework.data.geo.Shape;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -12,23 +17,24 @@ import java.util.List;
 import java.util.Objects;
 
 
-@Document(indexName="name")
-
+@Document(indexName="drone-plan-laurentiu")
 public class DronePlan {
-    private @Id @GeneratedValue String id;
+    @Id
+    @GeneratedValue
+    private String id;
     private String name;
-    //private String geometryType;
-   // private List<List<Double>> coordinates;
-
-    private Polygon geometry;
+    @Field
+    private GeoJsonPolygon geometry;
+    @Field(type = FieldType.Date)
     private String startTime;
-
+    @Field(type = FieldType.Date)
     private String endTime;
+
     public DronePlan(){
 
     }
 
-    public DronePlan(String id, String name, Polygon geometry, String startTime, String endTime) {
+    public DronePlan(String id, String name, GeoJsonPolygon geometry, String startTime, String endTime) {
         this.id = id;
         this.name = name;
        // this.coordinates = coordinates;
@@ -54,19 +60,11 @@ public class DronePlan {
         this.name = name;
     }
 
-//    public List<List<Double>> getCoordinates() {
-//        return coordinates;
-//    }
-//
-//    public void setCoordinates(List<List<Double>> coordinates) {
-//        this.coordinates = coordinates;
-//    }
-
-    public Polygon getGeometry() {
+    public GeoJsonPolygon getGeometry() {
         return geometry;
     }
 
-    public void setGeometry(Polygon geometry) {
+    public void setGeometry(GeoJsonPolygon geometry) {
         this.geometry = geometry;
     }
 
@@ -109,58 +107,4 @@ public class DronePlan {
                 ", endTime='" + endTime + '\'' +
                 '}';
     }
-}
- class Polygon {
-    @JsonProperty("type")
-     private String type = "Polygon";
-     @JsonProperty("coordinates")
-     private JsonNode coordinates;
-    public Polygon(){
-
-    }
-
-     public String getType() {
-         return type;
-     }
-
-     public void setType(String type) {
-         this.type = type;
-     }
-
-     public Polygon(JsonNode coordinates) {
-
-         this.coordinates = coordinates;
-     }
-
-
-     public  JsonNode getCoordinates() {
-         return coordinates;
-     }
-
-     public void setCoordinates( JsonNode coordinates) {
-
-        this.coordinates = coordinates;
-     }
-
-     @Override
-     public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-         Polygon polygon = (Polygon) o;
-         return Objects.equals(type, polygon.type) && Objects.equals(coordinates, polygon.coordinates);
-     }
-
-     @Override
-     public int hashCode() {
-         return Objects.hash(type, coordinates);
-     }
-
-     @Override
-     public String toString() {
-         return "Polygon{" +
-                 "type='" + type + '\'' +
-                 ", coordinates=" + coordinates +
-                 '}';
-     }
-
 }
