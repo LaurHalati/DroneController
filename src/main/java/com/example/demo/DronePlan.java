@@ -1,43 +1,36 @@
 package com.example.demo;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.GeoShapeField;
+import org.springframework.data.elasticsearch.annotations.*;
 import org.springframework.data.elasticsearch.core.geo.GeoJsonPolygon;
-import org.springframework.data.elasticsearch.core.geo.GeoPoint;
-import org.springframework.data.geo.Shape;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.util.List;
+import java.util.Date;
 import java.util.Objects;
 
 
-@Document(indexName="drone-plan-laurentiu")
+@Document(indexName = "drone-plan-laurentiu")
 public class DronePlan {
     @Id
     @GeneratedValue
     private String id;
     private String name;
-    @Field
+    @GeoShapeField
     private GeoJsonPolygon geometry;
-    @Field(type = FieldType.Date)
-    private String startTime;
-    @Field(type = FieldType.Date)
-    private String endTime;
+    @Field(type = FieldType.Date, format = DateFormat.custom, pattern = "yyyy-MM-dd'T'HH:mm")
+    private Date startTime;
+    @Field(type = FieldType.Date, format = DateFormat.custom, pattern = "yyyy-MM-dd'T'HH:mm")
 
-    public DronePlan(){
+    private Date endTime;
+
+    public DronePlan() {
 
     }
 
-    public DronePlan(String id, String name, GeoJsonPolygon geometry, String startTime, String endTime) {
+    public DronePlan(String id, String name, GeoJsonPolygon geometry, Date startTime, Date endTime) {
         this.id = id;
         this.name = name;
-       // this.coordinates = coordinates;
         this.geometry = geometry;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -68,19 +61,19 @@ public class DronePlan {
         this.geometry = geometry;
     }
 
-    public String getStartTime() {
+    public Date getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(String startTime) {
+    public void setStartTime(Date startTime) {
         this.startTime = startTime;
     }
 
-    public String getEndTime() {
+    public Date getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(String endTime) {
+    public void setEndTime(Date endTime) {
         this.endTime = endTime;
     }
 
@@ -103,8 +96,8 @@ public class DronePlan {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", geometry=" + geometry +
-                ", startTime='" + startTime + '\'' +
-                ", endTime='" + endTime + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
                 '}';
     }
 }
