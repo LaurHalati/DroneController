@@ -6,7 +6,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
- interface DroneRepository extends ElasticsearchRepository<DronePlan,String> {
+interface DroneRepository extends ElasticsearchRepository<DronePlan,String> {
  @Override
-List<DronePlan> findAll();
+ List<DronePlan> findAll();
+
 }
