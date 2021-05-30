@@ -15,7 +15,7 @@ class GeometryTransformationUtilsTest {
 
     @Test
     void translateGeometry() {
-        System.out.println(GeometryTransformationUtils.translateGeometry(getTestGeometry(), 1e-4, -5e-3));
+        System.out.println(GeometryTransformationUtils.translateGeometry(getTestGeometry(), 400, 200));
     }
 
     @Test

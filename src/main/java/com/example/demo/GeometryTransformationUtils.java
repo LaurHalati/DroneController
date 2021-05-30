@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 class GeometryTransformationUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GeometryTransformationUtils.class);
+    private static final double METERS_TO_DEGREES = 9.009009009009009e-6;
 
     static Geometry scaleGeometry(Geometry polygon, double scaleFactor) {
         LOGGER.info("Scaling geometry [{}] with a scale factor of [{}].", polygon.toString(), scaleFactor);
@@ -16,12 +17,14 @@ class GeometryTransformationUtils {
                 .transform(polygon);
     }
 
-    static Geometry translateGeometry(Geometry polygon, double degreesWestbound, double degreesNorthbound) {
+    static Geometry translateGeometry(Geometry polygon, double metersEastbound, double metersNorthbound) {
         LOGGER.info(
                 "Translating geometry [{}] with {} degrees to the East and {} degrees to the North.",
-                polygon.toString(), degreesWestbound, degreesNorthbound
+                polygon.toString(), metersEastbound, metersNorthbound
         );
-        return AffineTransformation.translationInstance(degreesWestbound, degreesNorthbound).transform(polygon);
+        double degreesEastbound = metersEastbound * METERS_TO_DEGREES;
+        double degreesNorthbound = metersNorthbound * METERS_TO_DEGREES;
+        return AffineTransformation.translationInstance(degreesEastbound, degreesNorthbound).transform(polygon);
     }
 
     static Geometry rotateGeometry(Geometry polygon, double angleInDegrees) {

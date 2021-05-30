@@ -137,8 +137,8 @@ public class DroneController {
             );
             Geometry translatedGeom = GeometryTransformationUtils.translateGeometry(
                     sourceGeom,
-                    getRandomDouble(-1e-4, 1e-4),
-                    getRandomDouble(-5e-3, 5e-3)
+                    getRandomDouble(-500, 500),
+                    getRandomDouble(-500, 500)
             );
             Geometry rotatedGeom = GeometryTransformationUtils.rotateGeometry(
                     sourceGeom,
