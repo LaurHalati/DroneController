@@ -6,20 +6,12 @@ import org.elasticsearch.common.geo.builders.PolygonBuilder;
 import org.elasticsearch.index.query.GeoShapeQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.PrecisionModel;
-import org.locationtech.jts.geom.util.AffineTransformation;
-import org.locationtech.jts.operation.buffer.BufferParameters;
 import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -27,23 +19,21 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.web.bind.annotation.*;
 
-import org.geotools.referencing.operation.transform.AffineTransform2D;
-
-import java.awt.geom.AffineTransform;
 import java.io.IOException;
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
-
-import static java.lang.Math.sqrt;
 
 @RestController
 @RequestMapping
 public class DroneController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DroneController.class);
+
     private final DroneRepository repository;
     private final ElasticsearchOperations elasticsearchOperations;
-    static Random rand = new Random();
+    private static Random rand = new Random();
 
     DroneController(DroneRepository repository, ElasticsearchOperations elasticsearchOperations) {
         this.repository = repository;
@@ -124,30 +114,44 @@ public class DroneController {
         return returns;
     }
 
-//    @CrossOrigin(origins = "*")
-//    @GetMapping("/drones/test")
-//    DronePlan testPlan() throws TransformException, FactoryException {
-//
-//        for (int i = 0; i < 2; i++) {
-//            List<List<List<Double>>> coords = new ArrayList<>();
-//            List<List<Double>> inner = new ArrayList<>();
-//            int index = rand.nextInt(33);
-//            System.out.println(repository.findAll().get(index).getGeometry().getCoordinates().get(0).getCoordinates());
-//            for (int j = 0; j < repository.findAll().get(index).getGeometry().getCoordinates().get(0).getCoordinates().toArray().length; j++) {
-//                List<Double> toAdd = new ArrayList<>();
-//                toAdd.add(repository.findAll().get(index).getGeometry().getCoordinates().get(0).getCoordinates().get(j).getX());
-//                toAdd.add(repository.findAll().get(index).getGeometry().getCoordinates().get(0).getCoordinates().get(j).getY());
-//                inner.add(toAdd);
-//            }
-//            coords.add(inner);
-//            System.out.println(new Utility().example(coords));
-//            System.out.println(scaleToUnitaryArea(new Utility().example(coords)));
-//            System.out.println(translateGeometry(new Utility().example(coords)));
-//            System.out.println(rotateGeom(new Utility().example(coords)));
-//
-//        }
-//        return repository.findAll().get(0);
-//    }
+    @CrossOrigin(origins = "*")
+    @GetMapping("/drones/test")
+    DronePlan testPlan() throws FactoryException, TransformException {
+
+        for (int i = 0; i < 2; i++) {
+            List<List<List<Double>>> coords = new ArrayList<>();
+            List<List<Double>> inner = new ArrayList<>();
+            int index = rand.nextInt(33);
+            System.out.println(repository.findAll().get(index).getGeometry().getCoordinates().get(0).getCoordinates());
+            for (int j = 0; j < repository.findAll().get(index).getGeometry().getCoordinates().get(0).getCoordinates().toArray().length; j++) {
+                List<Double> toAdd = new ArrayList<>();
+                toAdd.add(repository.findAll().get(index).getGeometry().getCoordinates().get(0).getCoordinates().get(j).getX());
+                toAdd.add(repository.findAll().get(index).getGeometry().getCoordinates().get(0).getCoordinates().get(j).getY());
+                inner.add(toAdd);
+            }
+            coords.add(inner);
+            Geometry sourceGeom = new Utility().example(coords);
+            Geometry scaledGeom = GeometryTransformationUtils.scaleGeometry(
+                    sourceGeom,
+                    getRandomDouble(1, 2)
+            );
+            Geometry translatedGeom = GeometryTransformationUtils.translateGeometry(
+                    sourceGeom,
+                    getRandomDouble(-500, 500),
+                    getRandomDouble(-500, 500)
+            );
+            Geometry rotatedGeom = GeometryTransformationUtils.rotateGeometry(
+                    sourceGeom,
+                    getRandomDouble(0, 360)
+            );
+            LOGGER.info("Source geom: [{}]", sourceGeom.toText());
+            LOGGER.info("Scaled geom: [{}]", scaledGeom.toText());
+            LOGGER.info("Translated geom: [{}]", translatedGeom.toText());
+            LOGGER.info("Rotated geom: [{}]", rotatedGeom.toText());
+
+        }
+        return repository.findAll().get(0);
+    }
 
 
     @DeleteMapping("/drones/{id}")
@@ -155,34 +159,8 @@ public class DroneController {
         repository.deleteById(id);
     }
 
-
-//    public  Geometry scaleToUnitaryArea(Geometry polygon) throws TransformException {
-//        double area = polygon.getArea();
-//        double scale = 1.25;
-//        AffineTransformation scaleAT = new AffineTransformation();
-//        scaleAT = scaleAT.scale(scale, scale);
-//        return scaleAT.transform(polygon);
-//    }
-//    public Geometry translateGeometry(Geometry polygon ){
-//        AffineTransformation translate = new AffineTransformation();
-//        translate = translate.translate(5e-2,0);
-//        return translate.transform(polygon);
-//    }
-//    public Geometry rotateGeom(Geometry polygon) throws FactoryException, TransformException {
-//
-//
-//        double x = polygon.getCentroid().getCoordinate().x;
-//        double y = polygon.getCentroid().getCoordinate().y;
-//        String code = "AUTO:42001," + x + "," + y;
-//        CoordinateReferenceSystem auto = CRS.decode(code);
-//        MathTransform transform = CRS.findMathTransform(DefaultGeographicCRS.WGS84, auto);
-//        MathTransform inverseTransform = CRS.findMathTransform(auto, DefaultGeographicCRS.WGS84);
-//        Geometry geometryLocalCRS=  JTS.transform(polygon,transform);
-//
-//        AffineTransformation rotateGeom = AffineTransformation.rotationInstance(0.78);
-//        Geometry localCRSTransform = rotateGeom.transform(geometryLocalCRS);
-//        return rotateGeom.transform(polygon);
-////        return JTS.transform(localCRSTransform,inverseTransform);
-//
-//    }
+    private static double getRandomDouble(double lowerBound, double upperBound) {
+        Random r = new Random(System.currentTimeMillis());
+        return lowerBound + (upperBound - lowerBound) * r.nextDouble();
+    }
 }
