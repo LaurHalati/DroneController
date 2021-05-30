@@ -116,7 +116,7 @@ public class DroneController {
 
     @CrossOrigin(origins = "*")
     @GetMapping("/drones/test")
-    DronePlan testPlan() throws FactoryException, TransformException {
+    DronePlan testPlan() {
 
         for (int i = 0; i < 2; i++) {
             List<List<List<Double>>> coords = new ArrayList<>();
@@ -137,8 +137,8 @@ public class DroneController {
             );
             Geometry translatedGeom = GeometryTransformationUtils.translateGeometry(
                     sourceGeom,
-                    getRandomDouble(-500, 500),
-                    getRandomDouble(-500, 500)
+                    getRandomDouble(-1e-4, 1e-4),
+                    getRandomDouble(-5e-3, 5e-3)
             );
             Geometry rotatedGeom = GeometryTransformationUtils.rotateGeometry(
                     sourceGeom,

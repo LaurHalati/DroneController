@@ -5,23 +5,21 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
 
 class GeometryTransformationUtilsTest {
 
     @Test
-    void scaleGeometry() throws FactoryException, TransformException {
+    void scaleGeometry() {
         System.out.println(GeometryTransformationUtils.scaleGeometry(getTestGeometry(), 1.5));
     }
 
     @Test
-    void translateGeometry() throws FactoryException, TransformException {
-        System.out.println(GeometryTransformationUtils.translateGeometry(getTestGeometry(), 500, -200));
+    void translateGeometry() {
+        System.out.println(GeometryTransformationUtils.translateGeometry(getTestGeometry(), 1e-4, -5e-3));
     }
 
     @Test
-    void rotateGeometry() throws FactoryException, TransformException {
+    void rotateGeometry() {
         System.out.println(GeometryTransformationUtils.rotateGeometry(getTestGeometry(), 45));
     }
 
