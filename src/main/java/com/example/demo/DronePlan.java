@@ -21,7 +21,6 @@ public class DronePlan {
     @Field(type = FieldType.Date, format = DateFormat.custom, pattern = "yyyy-MM-dd'T'HH:mm")
     private Date startTime;
     @Field(type = FieldType.Date, format = DateFormat.custom, pattern = "yyyy-MM-dd'T'HH:mm")
-
     private Date endTime;
 
     public DronePlan() {
