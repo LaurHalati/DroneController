@@ -10,7 +10,6 @@ import VectorSource from "ol/source/Vector";
 import Polygon from "ol/geom/Polygon";
 import { Tile as TileLayer, Vector, Vector as VectorLayer } from "ol/layer";
 import Draw from "ol/interaction/Draw";
-
 import Feature from "ol/Feature";
 import Intersects from "ol/format/filter/Intersects";
 import Geometry from "ol/geom/Geometry";
@@ -41,7 +40,7 @@ $("#sensorWidth").css("visibility", "hidden");
 $("#sensorWidthLabel").css("visibility", "hidden");
 $("#focalLength").css("visibility", "hidden");
 $("#focalLengthLabel").css("visibility", "hidden");
-//$("#drawTrajectory").css("visibility", "hidden")
+$("#drawTrajectory").css("visibility", "hidden")
 $("#beforeVizButton").css("visibility", "hidden")
 $("#visualizeBound").css("visibility", "hidden")
 }
@@ -56,8 +55,8 @@ function stateChange(newState) {
       divText.warningText = "";
     }
     if(newState==1){
-      //$("#spatialResolution").css("visibility", "visible");
-      //$("#spatialResolutionLabel").css("visibility", "visible");
+      $("#spatialResolution").css("visibility", "visible");
+      $("#spatialResolutionLabel").css("visibility", "visible");
 
     }
   }, 2500);
@@ -137,7 +136,6 @@ $("#submitGEO").on("click", function() {
     reader.onload = function(evt) {
       try {
         pasteJson = jQuery.parseJSON(evt.target.result);
-        console.log(pasteJson);
       } catch (error) {
         console.log(error);
         divText.warningText =
@@ -202,7 +200,7 @@ $("#drawTrajectory").on("click", function() {
   createMeasureTooltip();
   countTraj++;
     if (countTraj == 1) {
-      addInteraction(startTime, endTime, "displayTrajectory");
+      addInteraction("displayTrajectory");
     }
 });
 function sendData(startTime, endTime) {
@@ -212,7 +210,7 @@ function sendData(startTime, endTime) {
     createMeasureTooltip();
     count++;
     if (count == 1) {
-      addInteraction(startTime, endTime, "planning");
+      addInteraction("planning");
     }
   });
 }
@@ -233,8 +231,7 @@ function createMeasureTooltip() {
   map.addOverlay(measureTooltip);
 }
 var countDisp=0;
-function addInteraction(startTime, endTime, interaction) {
-  console.log(interaction)
+function addInteraction(interaction) {
   var clickCoords = 0;
   map.on("click", function(e) {
     clickCoords = e.coordinate;
@@ -258,13 +255,13 @@ function addInteraction(startTime, endTime, interaction) {
     const coordinates = evt.feature.getGeometry().getCoordinates();
     const geometry = new Polygon(coordinates);
     const geometry4326 = geometry.transform("EPSG:3857", "EPSG:4326");
-   
+    let picked = document.getElementById("toPick");
     drawPolygonOnMap(geometry4326.getCoordinates(), "toDraw");
-    const controller = new AbortController();
-    const { signal } = controller;  
-    if (interaction == "planning") {
+
+    if (picked.value == "schedule") {
       divText.inputText =
       "The polygon that you created has the following coordinates";
+
       var data = {
         geometry: {
           type: "Polygon",
@@ -286,7 +283,6 @@ function addInteraction(startTime, endTime, interaction) {
       },)
         .then((response) => response.json())
         .then((data) => {
-          console.log(geometry4326.getCoordinates());
           if (data[0].name == "intersectie") {
             checkIntersection(data, geometry4326.getCoordinates());
           } else {
@@ -297,7 +293,7 @@ function addInteraction(startTime, endTime, interaction) {
           console.error("Error:", error);
         });
 
-    } else if (interaction == "displayTrajectory") {
+    } else if (picked.value == "visualizeTrajectory") {
       var params = {
         geometry: {
           type: "Polygon",
@@ -402,6 +398,7 @@ function drawPolygonOnMap(coordinates, source) {
       });
       var layer2 = new VectorLayer({
         source: source2,
+        
       });
       map.addLayer(layer2);
     }
@@ -504,18 +501,12 @@ function drawPolygonOnMap(coordinates, source) {
 $("#button").on("click", function() {
   let request = new XMLHttpRequest();
   var url =
-    "http://localhost:8080/drones" +
-    "/" +
-    startTime.value +
-    "_" +
-    endTime.value;
-  console.log(url);
+    "http://localhost:8080/drones" +"/" +startTime.value +"_" +endTime.value;
   request.open("GET", url);
   request.responseType = "text";
   request.onload = function() {
     var test = JSON.parse(request.response);
     test.forEach((o) => {
-      console.log(o.geometry.coordinates)
       drawPolygonOnMap(o.geometry.coordinates, "fromdb");
     });
   };
@@ -562,7 +553,6 @@ $("#toPick").on("change", function(e) {
   e.preventDefault();
   let picked = document.getElementById("toPick");
   if (picked.value == "schedule") {
-   // interaction == "planning"
     divText.coordinatesText=""
     removeLayers()
     $("#app").css("display", "inline-block");
@@ -572,7 +562,6 @@ $("#toPick").on("change", function(e) {
 
   } else if (picked.value == "visualizeTrajectory") {
     removeLayers()
-    //interaction == "displayTrajectory"
     $("#app").css("display", "none");
     $("#app").css("visibility", "hidden");
     $("#app2").css("visibility", "visible");
@@ -586,43 +575,41 @@ $("#toPick").on("change", function(e) {
   }
 });
 
-// $("#spatialResolution").on("keydown",function(e){
-//   if(e.keyCode == 13){
-//     let spatialResolution = document.getElementById("spatialResolution");
-//     $("#digitalResolutionWidth").css("visibility", "visible");
-//     $("#digitalResolutionWidthLabel").css("visibility", "visible");
-//   }
-// })
-// $("#digitalResolutionWidth").on("keydown",function(e){
-//   if(e.keyCode == 13){
-//     let digitalResolutionWidth = document.getElementById("spatialResolution");
-//     $("#digitalResolutionHeight").css("visibility", "visible");
-//     $("#digitalResolutionHeightLabel").css("visibility", "visible");
-//   }
-// })
-// $("#digitalResolutionHeight").on("keydown",function(e){
-//   if(e.keyCode == 13){
-//     let digitalResolutionHeight = document.getElementById("spatialResolution");
-//     $("#sensorWidth").css("visibility", "visible");
-//     $("#sensorWidthLabel").css("visibility", "visible");
-//   }
-// })
-// $("#sensorWidth").on("keydown",function(e){
-//   if(e.keyCode == 13){
-//     let sensorWidth = document.getElementById("spatialResolution");
-//     $("#focalLength").css("visibility", "visible");
-//     $("#focalLengthLabel").css("visibility", "visible");
-//   }
-// })
-// $("#focalLength").on("keydown",function(e){
-//   if(e.keyCode == 13){
-//     let focalLength = document.getElementById("spatialResolution");
-//     $("#drawTrajectory").css("visibility", "visible")
+$("#spatialResolution").on("keydown",function(e){
+  if(e.keyCode == 13){
+    let spatialResolution = document.getElementById("spatialResolution");
+    $("#digitalResolutionWidth").css("visibility", "visible");
+    $("#digitalResolutionWidthLabel").css("visibility", "visible");
+  }
+})
+$("#digitalResolutionWidth").on("keydown",function(e){
+  if(e.keyCode == 13){
+    let digitalResolutionWidth = document.getElementById("spatialResolution");
+    $("#digitalResolutionHeight").css("visibility", "visible");
+    $("#digitalResolutionHeightLabel").css("visibility", "visible");
+  }
+})
+$("#digitalResolutionHeight").on("keydown",function(e){
+  if(e.keyCode == 13){
+    let digitalResolutionHeight = document.getElementById("spatialResolution");
+    $("#sensorWidth").css("visibility", "visible");
+    $("#sensorWidthLabel").css("visibility", "visible");
+  }
+})
+$("#sensorWidth").on("keydown",function(e){
+  if(e.keyCode == 13){
+    let sensorWidth = document.getElementById("spatialResolution");
+    $("#focalLength").css("visibility", "visible");
+    $("#focalLengthLabel").css("visibility", "visible");
+  }
+})
+$("#focalLength").on("keydown",function(e){
+  if(e.keyCode == 13){
+    let focalLength = document.getElementById("spatialResolution");
+    $("#drawTrajectory").css("visibility", "visible")
     
-//   }
-// })
-$("#drawTrajectory").css("visibility", "visible")
-
+  }
+})
 
 function removeLayers(){
   var layerArray, len, layer;
@@ -646,10 +633,8 @@ $("#visualizeBound").on("click",function(){
   })
     .then((response) => response.json())
     .then((data) => {
-
       let coords=[]
       let coordonate=[]
-      console.log(data)
       for(let i=0;i<data.length;i++){
         let local=[]
         local.push(data[i].x)
@@ -657,8 +642,6 @@ $("#visualizeBound").on("click",function(){
         coordonate.push(local)
       }
       coords.push(coordonate)
-      console.log(coords)
-      
       var polygonFeature = new Feature(
         new Polygon(coords).transform("EPSG:4326", "EPSG:3857")
       );
@@ -675,8 +658,6 @@ $("#visualizeBound").on("click",function(){
       });
       map.addLayer(layer)
       countDisp++;
-      
-
       console.log("Success:");
     })
     .catch((error) => {
