@@ -11,8 +11,6 @@ import Polygon from "ol/geom/Polygon";
 import { Tile as TileLayer, Vector, Vector as VectorLayer } from "ol/layer";
 import Draw from "ol/interaction/Draw";
 import Feature from "ol/Feature";
-import Intersects from "ol/format/filter/Intersects";
-import Geometry from "ol/geom/Geometry";
 import Point from "ol/geom/Point";
 import * as turf from "@turf/turf";
 import MousePosition from "ol/control/MousePosition";
@@ -20,15 +18,13 @@ import { createStringXY } from "ol/coordinate";
 import { defaults as defaultControls } from "ol/control";
 import LineString from "ol/geom/LineString";
 import Text from "ol/style/Text";
-import Projection from "ol/proj/Projection";
 import { getLength } from "ol/sphere";
 import Overlay from "ol/Overlay";
-import { unByKey } from "ol/Observable";
 
 $("#app").css("visibility", "hidden");
 $("#app2").css("visibility", "hidden");
-
-
+$("#reloadPage").css("visibility","hidden");
+$("#saveTodB").css("visibility", "hidden")
 function hideSecondDiv(){
 $("#spatialResolution").css("visibility", "hidden");
 $("#spatialResolutionLabel").css("visibility", "hidden");
@@ -40,9 +36,13 @@ $("#sensorWidth").css("visibility", "hidden");
 $("#sensorWidthLabel").css("visibility", "hidden");
 $("#focalLength").css("visibility", "hidden");
 $("#focalLengthLabel").css("visibility", "hidden");
+$("#fligthAltitude").css("visibility","hidden")
 $("#drawTrajectory").css("visibility", "hidden")
 $("#beforeVizButton").css("visibility", "hidden")
 $("#visualizeBound").css("visibility", "hidden")
+$("#boundDate").css("visibility", "hidden")
+$("#finalDiv").css("visibility", "hidden")
+
 }
 hideSecondDiv()
 
@@ -124,9 +124,16 @@ var divText = new Vue({
     coordinatesText: "",
     inputText: "",
     warningText: "",
+    flightAltitude:"",
   },
 });
-
+var divText2 = new Vue({
+  el: "#app2",
+  data: {
+    flightAltitude:"",
+    finalDivText:"",
+  },
+});
 $("#submitGEO").on("click", function() {
   const selectedFile = document.getElementById("geoInput").files[0];
   let pasteJson;
@@ -136,6 +143,9 @@ $("#submitGEO").on("click", function() {
     reader.onload = function(evt) {
       try {
         pasteJson = jQuery.parseJSON(evt.target.result);
+        divText.warningText =
+          "The uploaded GeoJSON is visible on the map";
+          stateChange(0);
       } catch (error) {
         console.log(error);
         divText.warningText =
@@ -203,7 +213,7 @@ $("#drawTrajectory").on("click", function() {
       addInteraction("displayTrajectory");
     }
 });
-function sendData(startTime, endTime) {
+function sendData() {
   $("form").on("submit", function(e) {
     e.preventDefault();
     map.addInteraction(draw);
@@ -231,7 +241,7 @@ function createMeasureTooltip() {
   map.addOverlay(measureTooltip);
 }
 var countDisp=0;
-function addInteraction(interaction) {
+function addInteraction() {
   var clickCoords = 0;
   map.on("click", function(e) {
     clickCoords = e.coordinate;
@@ -248,20 +258,22 @@ function addInteraction(interaction) {
       measureTooltipElement.innerHTML = output;
       measureTooltip.setPosition(tooltipCoord);
     }
+    
   });
 
   draw.on("drawend", (evt) => {
     map.removeOverlay(measureTooltip);
+    measureTooltip.setPosition(0,0)
     const coordinates = evt.feature.getGeometry().getCoordinates();
     const geometry = new Polygon(coordinates);
     const geometry4326 = geometry.transform("EPSG:3857", "EPSG:4326");
     let picked = document.getElementById("toPick");
     drawPolygonOnMap(geometry4326.getCoordinates(), "toDraw");
-
+      var text=  "The polygon that you created has the following coordinates";
     if (picked.value == "schedule") {
-      divText.inputText =
-      "The polygon that you created has the following coordinates";
-
+      divText.inputText =""
+      divText.inputText+=text
+    
       var data = {
         geometry: {
           type: "Polygon",
@@ -287,6 +299,9 @@ function addInteraction(interaction) {
             checkIntersection(data, geometry4326.getCoordinates());
           } else {
             console.log("Success:");
+            $("#saveTodB").css("visibility", "visible")
+            saved(geometry4326)
+
           }
         })
         .catch((error) => {
@@ -299,11 +314,11 @@ function addInteraction(interaction) {
           type: "Polygon",
           coordinates: geometry4326.getCoordinates(),
         },
-        spatialResolution:7.6,
-        digitalResolutionWidth: 4000,
-        digitalResolutionHeight: 3000,
-        sensorWidth: 2.9,
-        focalLength: 3.6,
+        spatialResolution:spatialResolution.value,
+        digitalResolutionWidth: digitalResolutionWidth.value,
+        digitalResolutionHeight: digitalResolutionHeight.value,
+        sensorWidth: sensorWidth.value,
+        focalLength: focalLength.value,
       };
       map.removeInteraction(draw);
 
@@ -386,6 +401,7 @@ function drawPolygonOnMap(coordinates, source) {
 
     map.addLayer(layer);
   } else if (source == "toDraw") {
+    divText.coordinatesText=""
     divText.coordinatesText +=
       "Flight plan number " + polygonNo + " has the following coordinates: ";
     for (let i = 0; i < coordinates[0].length - 1; i++) {
@@ -499,7 +515,9 @@ function drawPolygonOnMap(coordinates, source) {
   }
 }
 $("#button").on("click", function() {
+  removeLayers()
   let request = new XMLHttpRequest();
+  console.log(startTime.value, endTime.value,"click")
   var url =
     "http://localhost:8080/drones" +"/" +startTime.value +"_" +endTime.value;
   request.open("GET", url);
@@ -512,8 +530,15 @@ $("#button").on("click", function() {
   };
   request.send();
 });
+function saved(geometry){ 
+$("#saveTodB").on("click",function(){
+  divText.warningText="The plan was saved successfully"
+  drawPolygonOnMap(geometry.getCoordinates(), "fromdb");
+})
+}
 
 function checkIntersection(toDraw, drawnCoords) {
+  $("#saveTodB").css("visibility", "hidden")
   const userPolygon = new Feature(
     new Polygon(drawnCoords).transform("EPSG:4326", "EPSG:3857")
   );
@@ -545,6 +570,11 @@ function checkIntersection(toDraw, drawnCoords) {
         image: circelStyle,
       }),
     });
+    divText.warningText="The plan drawn is intersects other plans as you can see on the map.\t\n"
+    +"Please consider realoading the page and picking other area or time interval"
+    $("#reloadPage").css("visibility","visible")
+
+
     map.addLayer(layer);
   }
 }
@@ -558,6 +588,8 @@ $("#toPick").on("change", function(e) {
     $("#app").css("display", "inline-block");
     $("#app").css("visibility", "visible");
     $("#app2").css("visibility", "hidden");
+    $("#reloadPage").css("visibility","hidden");
+    $("#saveTodB").css("visibility", "hidden")
     hideSecondDiv()
 
   } else if (picked.value == "visualizeTrajectory") {
@@ -606,10 +638,36 @@ $("#sensorWidth").on("keydown",function(e){
 $("#focalLength").on("keydown",function(e){
   if(e.keyCode == 13){
     let focalLength = document.getElementById("spatialResolution");
+    $("#fligthAltitude").css("visibility","visible")
     $("#drawTrajectory").css("visibility", "visible")
+    let altitude= (spatialResolution.value*10*digitalResolutionWidth.value*focalLength.value)/sensorWidth.value;
+    divText2.flightAltitude="The altitude required by the parameters provided is: "+(altitude*0.001)+" m"
     
   }
 })
+var startTime2, endTime2;
+$("#start-time2").on("change", function() {
+  startTime2 = document.getElementById("start-time2");
+  var endDate = new Date(startTime2.value);
+  endDate.setMinutes(endDate.getMinutes() + 30);
+  Number.prototype.AddZero = function(b, c) {
+    var l = String(b || 10).length - String(this).length + 1;
+    return l > 0 ? new Array(l).join(c || "0") + this : this;
+  }; //to add zero to less than 10
+  var localDateTime =
+    [
+      endDate.getFullYear(),
+      (endDate.getMonth() + 1).AddZero(),
+      endDate.getDate().AddZero(),
+    ].join("-") +
+    "T" +
+    [endDate.getHours().AddZero(), endDate.getMinutes().AddZero()].join(":");
+    endTime2 = document.getElementById("end-time2");
+    endTime2.min = startTime2;
+    endTime2.value = localDateTime;
+ // sendData(startTime2, endTime);
+});
+
 
 function removeLayers(){
   var layerArray, len, layer;
@@ -656,9 +714,12 @@ $("#visualizeBound").on("click",function(){
           image: circelStyle,
         }),
       });
-      map.addLayer(layer)
+      //map.addLayer(layer)
+      displayAndSaveBound(layer,coords);
       countDisp++;
       console.log("Success:");
+      $("#boundDate").css("visibility", "visible")
+
     })
     .catch((error) => {
       console.error("Error:", error);
@@ -667,3 +728,56 @@ $("#visualizeBound").on("click",function(){
   }
     
 )}
+
+function displayAndSaveBound(layer,coords){
+  map.addLayer(layer);
+  console.log(coords)
+    const geometry = new Polygon(coords);
+    //const geometry4326 = geometry.transform("EPSG:3857", "EPSG:4326");
+  console.log(geometry.getCoordinates())
+  
+  $("#submitBound").on("click",function(){
+    var data = {
+      geometry: {
+        type: "Polygon",
+        coordinates: geometry.getCoordinates(),
+      },
+      startTime: startTime2.value,
+      endTime: endTime2.value,
+    };
+    map.removeInteraction(draw);
+    
+    fetch("http://localhost:8080/drones", {
+      
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        charset: "utf-8",
+      },
+      body: JSON.stringify(data),
+    },)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data[0].name == "intersectie") {
+          checkIntersection(data, geometry.getCoordinates());
+          divText2.finalDivText="Unfortunately the bounding region of the path overlaps with other existing plans \n\t"+
+          "and it cannot be saved as a valid plan. We recommend to pick another date or hour"
+        } else {
+          console.log("Success:");
+          divText2.finalDivText="The bounding region was successfully saved into the database"
+          map.removeLayer(layer)
+          setTimeout(function() {
+            drawPolygonOnMap(geometry.getCoordinates(), "fromdb");
+          }, 2000);  
+
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+      
+  })
+ 
+
+
+}
