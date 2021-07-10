@@ -45,9 +45,9 @@
               min="2021-03-01T00:00"
               max="2021-03-31T23:59"
             />
-            <br />
+            <br /><br>
             Select the end time of the plan
-            <br />
+            <br /> 
             <input
               type="datetime-local"
               id="end-time"
@@ -60,7 +60,9 @@
           {{inputText}} <br />
           <div style="white-space: pre-line">{{coordinatesText}}</div>
           {{warningText}}
-          <!-- <button id="finalSubmit" class="finalSubmit" >Are you sure you want to submit this flight plan?</button>  -->
+          <br>
+          <button id="reloadPage" onClick="window.location.reload();">Refresh Page</button> <br>
+          <button id="saveTodB" >Save plan in the database</button>
         </div>
         <div id="app2">
           <p style="white-space: pre-line">
@@ -75,7 +77,7 @@
           <label id="digitalResolutionWidthLabel">DigitalResolutionWidth (px) :</label>
           <input id="digitalResolutionWidth"name="digitalResolutionWidth" /><br /><br />
 
-          <label id="digitalResolutionHeightLabel">digitalResolutionHeight (px) :</label>
+          <label id="digitalResolutionHeightLabel">DigitalResolutionHeight (px) :</label>
           <input id="digitalResolutionHeight"name="digitalResolutionHeight" /><br /><br />
 
           <label id="sensorWidthLabel">SensorWidth (mm) :</label>
@@ -83,14 +85,35 @@
 
           <label id="focalLengthLabel">FocalLength (mm) :</label>
           <input id="focalLength" name="focalLength" /><br /><br />
-
+          <div id="fligthAltitude" >  {{flightAltitude}}</div>
          <br> <button id="drawTrajectory">
+           
             Click here to draw a plan and display it's trajectory
-          </button> <br>
+          </button> <br> <br>
          <div id="beforeVizButton">  If you consider that the trajectory exits the initial path,<br>
            please consider clicking the next button, <br>
-          for visualizing our recommanded plan for your path.</div>
-          <button id="visualizeBound"> Visualize bounding region of the path</button>
+          for visualizing our recommanded plan for your path.</div> <br>
+          <button id="visualizeBound"> Visualize bounding region of the path</button> 
+          <div id="boundDate"> 
+          Please provide the start time <br>
+          <input
+              type="datetime-local"
+              id="start-time2"
+              min="2021-03-01T00:00"
+              max="2021-03-31T23:59"
+            />
+            <br /><br>
+            Select the end time of the plan
+            <br /> 
+            <input
+              type="datetime-local"
+              id="end-time2"
+              min="2021-03-01T00:00"
+              max="2021-03-31T23:59"
+            />
+            <button id="submitBound"> Submit the bounding region</button>
+            </div>
+            <div >{{finalDivText}} </div>
         </div>
       </div>
     </div>
